@@ -17,17 +17,22 @@ class DogShould {
         System.setOut(new PrintStream(consoleContent));
     }
 
-
     @Test
-    void run() {
-        dog.run();
+    void run_as_a_running_capable_animal() {
+        // Enforces that Dog strictly implements the Running interface
+        Running runningDog = dog; 
+        runningDog.run();
+        
         assertThat(consoleContent.toString())
                 .isEqualTo("Dog is running");
     }
 
     @Test
-    void bark() {
-        dog.bark();
+    void bark_as_a_barking_capable_animal() {
+        // Enforces that Dog strictly implements the Barking interface
+        Barking barkingDog = dog; 
+        barkingDog.bark();
+        
         assertThat(consoleContent.toString())
                 .isEqualTo("Dog is barking");
     }
