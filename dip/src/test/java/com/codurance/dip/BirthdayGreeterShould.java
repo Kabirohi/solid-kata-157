@@ -2,18 +2,18 @@ package com.codurance.dip;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.time.MonthDay;
 import java.util.Collections;
 
 import static com.codurance.dip.EmployeeBuilder.anEmployee;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 public class BirthdayGreeterShould {
@@ -25,28 +25,26 @@ public class BirthdayGreeterShould {
     private EmployeeRepository employeeRepository;
     @Mock
     private Clock clock;
+    @Mock
+    private EmailSender emailSender;
 
     @InjectMocks
     private BirthdayGreeter birthdayGreeter;
 
-
-    private ByteArrayOutputStream consoleContent = new ByteArrayOutputStream();
-
     @Test
     public void should_send_greeting_email_to_employee() {
-        System.setOut(new PrintStream(consoleContent));
         given(clock.monthDay()).willReturn(TODAY);
         Employee employee = anEmployee().build();
-        given(employeeRepository.findEmployeesBornOn(MonthDay.of(CURRENT_MONTH, CURRENT_DAY_OF_MONTH))).willReturn(Collections.singletonList(employee));
+        given(employeeRepository.findEmployeesBornOn(TODAY)).willReturn(Collections.singletonList(employee));
 
         birthdayGreeter.sendGreetings();
 
-        String actual = consoleContent.toString();
-        assertThat(actual)
-                .isEqualTo("To:" + employee.getEmail() + ", Subject: Happy birthday!, Message: Happy birthday, dear " + employee.getFirstName()+"!");
+        ArgumentCaptor<Email> emailCaptor = ArgumentCaptor.forClass(Email.class);
+        verify(emailSender).send(emailCaptor.capture());
 
+        Email actualEmail = emailCaptor.getValue();
+        assertThat(actualEmail.getTo()).isEqualTo(employee.getEmail());
+        assertThat(actualEmail.getSubject()).isEqualTo("Happy birthday!");
+        assertThat(actualEmail.getMessage()).isEqualTo("Happy birthday, dear " + employee.getFirstName() + "!");
     }
-
-
-
 }
